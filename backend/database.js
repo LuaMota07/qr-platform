@@ -11,6 +11,19 @@ db.serialize(() => {
     )
   `)
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT UNIQUE,
+      password TEXT
+    )
+  `)
+
+  db.run(`
+    INSERT OR IGNORE INTO users (email, password)
+    VALUES ('admin@qrcode.com', 'admin123')
+  `)
+
 })
 
 module.exports = db

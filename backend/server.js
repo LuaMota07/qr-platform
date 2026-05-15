@@ -152,6 +152,40 @@ app.get('/r/:id', (req, res) => {
 SERVER
 ====================================
 */
+app.post('/login', (req, res) => {
+
+  const { email, password } = req.body
+
+  db.get(
+    'SELECT * FROM users WHERE email = ? AND password = ?',
+    [email, password],
+    (err, user) => {
+
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: 'Database error'
+        })
+      }
+
+      if (!user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid credentials'
+        })
+      }
+
+      res.json({
+        success: true,
+        user: {
+          email: user.email
+        }
+      })
+
+    }
+  )
+
+})
 
 app.listen(3000, '0.0.0.0', () => {
   console.log('Server running on port 3000')

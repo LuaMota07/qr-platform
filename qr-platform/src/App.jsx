@@ -1,17 +1,59 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 
 function App() {
+  const [logged, setLogged] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
 
   const [url, setUrl] = useState('')
   const [qr, setQr] = useState('')
   const [size, setSize] = useState(256)
   const [type, setType] = useState('static')
 
-  async function generateQR() {
+  useEffect(() => {
+    const session = localStorage.getItem('loggedUser')
+    if (session) {
+      setLogged(true)
+    }
+  }, [])
 
+  async function handleLogin() {
+    try {
+      const response = await fetch('http://localhost:3000/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email,
+          password
+        })
+      })
+
+      const data = await response.json()
+
+      if (!data.success) {
+        alert('Login inválido')
+        return
+      }
+
+      localStorage.setItem('loggedUser', data.user.email)
+      setLogged(true)
+
+    } catch (error) {
+      alert('Erro no login')
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem('loggedUser')
+    setLogged(false)
+  }
+
+  async function generateQR() {
     if (!url) {
-      alert('Please enter a URL')
+      alert('Digite uma URL')
       return
     }
 
@@ -21,64 +63,84 @@ function App() {
         : 'http://localhost:3000/generate-dynamic'
 
     try {
-
       const response = await fetch(endpoint, {
-
         method: 'POST',
-
         headers: {
           'Content-Type': 'application/json'
         },
-
-        body: JSON.stringify({
-          url
-        })
-
+        body: JSON.stringify({ url })
       })
 
       const data = await response.json()
-
       setQr(data.qr)
 
-    } catch (error) {
-
-      console.log(error)
-
-      alert('Error generating QR Code')
-
+    } catch {
+      alert('Erro')
     }
-
   }
 
   function downloadQR() {
-
-    if (!qr) {
-      alert('Generate a QR Code first')
-      return
-    }
+    if (!qr) return
 
     const link = document.createElement('a')
-
     link.href = qr
     link.download = 'qrcode.png'
-
     link.click()
+  }
 
+  if (!logged) {
+    return (
+      <div className="login-page">
+
+        <div className="login-card">
+
+          <div className="logo">QR</div>
+
+          <h1>Bem-vindo</h1>
+          <p className="subtitle">Faça login para continuar</p>
+
+          <div className="login-form">
+
+            <label>Email</label>
+            <input
+              type="text"
+              placeholder="seu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+
+            <label>Senha</label>
+            <input
+              type="password"
+              placeholder="********"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+
+            <button onClick={handleLogin}>
+              Entrar
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+    )
   }
 
   return (
-
     <div className="container">
+
+      <button className="logout-btn" onClick={logout}>
+        Sair
+      </button>
 
       <div className="left-panel">
 
-        <div className="logo">
-          QR
-        </div>
+        <div className="logo">QR</div>
 
-        <h1>
-          QR Code Generator
-        </h1>
+        <h1>QR Code Generator</h1>
 
         <p className="subtitle">
           Create custom QR codes instantly
@@ -91,43 +153,19 @@ function App() {
         <div className="type-container">
 
           <div
-            className={
-              type === 'static'
-                ? 'type-card active'
-                : 'type-card'
-            }
-
+            className={type === 'static' ? 'type-card active' : 'type-card'}
             onClick={() => setType('static')}
           >
-
-            <h2>
-              Static QR
-            </h2>
-
-            <p>
-              Fixed content, not editable
-            </p>
-
+            <h2>Static QR</h2>
+            <p>Fixed content</p>
           </div>
 
           <div
-            className={
-              type === 'dynamic'
-                ? 'type-card active'
-                : 'type-card'
-            }
-
+            className={type === 'dynamic' ? 'type-card active' : 'type-card'}
             onClick={() => setType('dynamic')}
           >
-
-            <h2>
-              Dynamic QR
-            </h2>
-
-            <p>
-              Editable content with tracking
-            </p>
-
+            <h2>Dynamic QR</h2>
+            <p>Editable content</p>
           </div>
 
         </div>
@@ -138,19 +176,13 @@ function App() {
 
         <input
           type="text"
-          placeholder="Enter URL here..."
+          placeholder="Digite a URL"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
         />
 
         <div className="size-text">
-
-          QR Code Size:
-
-          <span>
-            {size}px
-          </span>
-
+          QR Size <span>{size}px</span>
         </div>
 
         <input
@@ -163,74 +195,21 @@ function App() {
         />
 
         <div className="range-labels">
-
-          <span>
-            Small
-          </span>
-
-          <span>
-            Large
-          </span>
-
+          <span>Small</span>
+          <span>Large</span>
         </div>
 
         <div className="button-group">
-
-          <button
-            onClick={generateQR}
-          >
-            Generate QR Code
+          <button onClick={generateQR}>
+            Generate QR
           </button>
 
           <button
             className="download-btn"
             onClick={downloadQR}
           >
-            ↓ Download QR Code
+            Download
           </button>
-
-        </div>
-
-        <div className="divider"></div>
-
-        <div className="features">
-
-          <div className="feature-card">
-
-            <h2>
-              ∞
-            </h2>
-
-            <p>
-              Unlimited
-            </p>
-
-          </div>
-
-          <div className="feature-card">
-
-            <h2>
-              HD
-            </h2>
-
-            <p>
-              Quality
-            </p>
-
-          </div>
-
-          <div className="feature-card">
-
-            <h2>
-              ⚡
-            </h2>
-
-            <p>
-              Instant
-            </p>
-
-          </div>
-
         </div>
 
       </div>
@@ -244,7 +223,7 @@ function App() {
               ? (
                 <img
                   src={qr}
-                  alt="QR Code"
+                  alt="QR"
                   style={{
                     width: `${size}px`,
                     height: `${size}px`
@@ -263,9 +242,7 @@ function App() {
       </div>
 
     </div>
-
   )
-
 }
 
 export default App
